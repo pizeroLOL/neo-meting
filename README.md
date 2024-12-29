@@ -1,4 +1,4 @@
-# neo metign
+# neo meting
 
 **WIP**
 
