@@ -149,6 +149,7 @@ impl Display for SongItem {
 #[derive(Debug, Serialize, Deserialize)]
 struct SongFileReq {
     ids: Vec<String>,
+    /// 记得 * 1000，不然会导致没有数据然后 502
     br: u64,
 }
 
@@ -289,17 +290,10 @@ const GET_ID_NAME_PIC_ARTIST_ERR_MSG: &str = "
 ///
 /// - .id as u64
 /// - .name as str
-/// // - .al.pic_str as str / .al.pic as u64
 /// - .ar as array
 fn get_id_name_artist(input: &Value) -> Option<(String, String, String)> {
     let id = input.get("id")?.as_u64()?.to_string();
     let name = input.get("name")?.as_str()?.to_string();
-    // let al = input.get("al")?;
-    // let pic = al
-    //     .get("pic_str")?
-    //     .as_str()
-    //     .map(|str| str.to_string())
-    //     .or_else(|| Some(al.get("pic")?.as_u64()?.to_string()))?;
     let artist = input
         .get("ar")?
         .as_array()?

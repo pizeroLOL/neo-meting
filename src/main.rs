@@ -182,10 +182,10 @@ where
                     return;
                 };
                 let server = req.uri();
-                let scheme = server
+                let schema = server
                     .scheme_str()
-                    .map(|sheme| format!("{sheme}://"))
-                    .unwrap_or(format!("http"));
+                    .map(|schema| format!("{schema}://"))
+                    .unwrap_or("http://".to_string());
                 let Some(auth) = server.authority().map(|auth| auth.as_str()) else {
                     res.render(StatusError::bad_request());
                     return;
@@ -194,9 +194,9 @@ where
                 let url = self
                     .song(
                         param,
-                        |pid| format!("{scheme}{auth}/{client}/pic/{pid}",),
-                        |lid| format!("{scheme}{auth}/{client}/lrc/{lid}",),
-                        |uid| format!("{scheme}{auth}/{client}/url/{uid}",),
+                        |pid| format!("{schema}{auth}/{client}/pic/{pid}",),
+                        |lid| format!("{schema}{auth}/{client}/lrc/{lid}",),
+                        |uid| format!("{schema}{auth}/{client}/url/{uid}",),
                     )
                     .await;
                 match url {
@@ -232,10 +232,10 @@ where
                     return;
                 };
                 let server = req.uri();
-                let scheme = server
+                let schema = server
                     .scheme_str()
                     .map(|sheme| format!("{sheme}://"))
-                    .unwrap_or(format!("http"));
+                    .unwrap_or("http://".to_string());
                 let Some(auth) = server.authority().map(|auth| auth.as_str()) else {
                     res.render(StatusError::bad_request());
                     return;
@@ -245,9 +245,9 @@ where
                     .playlist(
                         param,
                         *RETRY.read().await,
-                        |pid| format!("{scheme}{auth}/{client}/pic/{pid}",),
-                        |lid| format!("{scheme}{auth}/{client}/lrc/{lid}",),
-                        |uid| format!("{scheme}{auth}/{client}/url/{uid}",),
+                        |pid| format!("{schema}{auth}/{client}/pic/{pid}",),
+                        |lid| format!("{schema}{auth}/{client}/lrc/{lid}",),
+                        |uid| format!("{schema}{auth}/{client}/url/{uid}",),
                     )
                     .await;
                 match url {
@@ -283,10 +283,10 @@ where
                     return;
                 };
                 let server = req.uri();
-                let scheme = server
+                let schema = server
                     .scheme_str()
-                    .map(|sheme| format!("{sheme}://"))
-                    .unwrap_or(format!("http"));
+                    .map(|shema| format!("{shema}://"))
+                    .unwrap_or("https://".to_string());
                 let Some(auth) = server.authority().map(|auth| auth.as_str()) else {
                     res.render(StatusError::bad_request());
                     return;
@@ -295,9 +295,9 @@ where
                 let url = self
                     .artist(
                         param,
-                        |pid| format!("{scheme}{auth}/{client}/pic/{pid}",),
-                        |lid| format!("{scheme}{auth}/{client}/lrc/{lid}",),
-                        |uid| format!("{scheme}{auth}/{client}/url/{uid}",),
+                        |pid| format!("{schema}{auth}/{client}/pic/{pid}",),
+                        |lid| format!("{schema}{auth}/{client}/lrc/{lid}",),
+                        |uid| format!("{schema}{auth}/{client}/url/{uid}",),
                     )
                     .await;
                 match url {
@@ -332,10 +332,10 @@ where
                     return;
                 };
                 let server = req.uri();
-                let scheme = server
+                let schema = server
                     .scheme_str()
-                    .map(|sheme| format!("{sheme}://"))
-                    .unwrap_or(format!("http"));
+                    .map(|shema| format!("{shema}://"))
+                    .unwrap_or("https://".to_string());
                 let Some(auth) = server.authority().map(|auth| auth.as_str()) else {
                     res.render(StatusError::bad_request());
                     return;
@@ -350,9 +350,9 @@ where
                     .search(
                         param,
                         options,
-                        |pid| format!("{scheme}{auth}/{client}/pic/{pid}",),
-                        |lid| format!("{scheme}{auth}/{client}/lrc/{lid}",),
-                        |uid| format!("{scheme}{auth}/{client}/url/{uid}",),
+                        |pid| format!("{schema}{auth}/{client}/pic/{pid}",),
+                        |lid| format!("{schema}{auth}/{client}/lrc/{lid}",),
+                        |uid| format!("{schema}{auth}/{client}/url/{uid}",),
                     )
                     .await;
                 match url {
