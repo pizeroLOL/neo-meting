@@ -322,7 +322,7 @@ const SONG_URL: &str = "https://music.163.com/weapi/song/enhance/player/url";
 const LRC_URL: &str = "https://music.163.com/weapi/song/lyric";
 const SEARCH_URL: &str = "https://music.163.com/weapi/cloudsearch/pc";
 
-// const MUSIC_QUALITY: u32 = 9999;
+const MUSIC_QUALITY: u64 = 320 * 1000;
 const ITEM_PRE_REQUEST: usize = 512;
 const ENCODER_NAME: &str = "netease";
 
@@ -334,7 +334,7 @@ impl MetingApi for Netease {
     async fn url(&self, id: &str) -> Result<String, Error> {
         let data = SongFileReq {
             ids: vec![id.to_string()],
-            br: 320,
+            br: MUSIC_QUALITY,
         }
         .to_string()
         .then(|str| WeapiEncoder::try_from_str(&str))
