@@ -1,0 +1,7 @@
+/<server_name>/<method>/<id> -> result
+
+server_name = "netease"
+method = "pic" | "lrc" | "url" | "song" | "playlist" | "artist" | "search"
+id = str | usize
+
+result = None(code != 200) | Some(json(method != pic/url) | redirect(method != pic/url))

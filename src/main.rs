@@ -5,11 +5,7 @@ use std::{
 
 use neo_metting::{netease::Netease, MetingApi, MetingSearchOptions};
 use salvo::{
-    async_trait,
-    conn::TcpListener,
-    http::StatusError,
-    writing::{Json, Redirect},
-    Depot, FlowCtrl, Handler, Listener, Request, Response, Router, Server,
+    async_trait, conn::TcpListener, handler, http::StatusError, writing::{Json, Redirect}, Depot, FlowCtrl, Handler, Listener, Request, Response, Router, Server
 };
 use tokio::sync::{RwLock, Semaphore};
 use tracing::warn;
@@ -45,7 +41,7 @@ fn prosess_meting_error(file: &str, line: u32, e: neo_metting::Error) -> StatusE
             target: _,
         } => StatusError::bad_gateway(),
         E::None => StatusError::not_found(),
-        E::Unimplemented => StatusError::not_found(),
+        E::Unimplemented => StatusError::not_implemented(),
     }
 }
 
@@ -363,23 +359,29 @@ where
         }
         Hendle(self.clone())
     }
+    fn into_router(self: Arc<Self>) -> Router where {
+        Router::with_path(Self::name())
+            .push(Router::with_path("pic/<id>").get(self.clone().get_pic()))
+            .push(Router::with_path("lrc/<id>").get(self.clone().get_lrc()))
+            .push(Router::with_path("url/<id>").get(self.clone().get_url()))
+            .push(Router::with_path("song/<id>").get(self.clone().get_song()))
+            .push(Router::with_path("playlist/<id>").get(self.clone().get_playlist()))
+            .push(Router::with_path("artist/<id>").get(self.clone().get_artist()))
+            .push(Router::with_path("search/<id>").get(self.clone().get_search()))
+    }
 }
 
 impl<T: MetingApi> SalvoMeting for T {}
 
+#[handler]
+fn help() -> &'static str {
+    include_str!("../help.txt")
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().init();
-    let semaphore = Semaphore::const_new(8);
-    let netease = semaphore.then(Arc::new).then(Netease::new).then(Arc::new);
-    let netease_route = Router::with_path(Netease::name())
-        .push(Router::with_path("search/<id>").get(netease.clone().get_search()))
-        .push(Router::with_path("playlist/<id>").get(netease.clone().get_playlist()))
-        .push(Router::with_path("song/<id>").get(netease.clone().get_song()))
-        // .push(Router::with_path("artist/<id>").get(netease.clone().get_artist()))
-        .push(Router::with_path("lrc/<id>").get(netease.clone().get_lrc()))
-        .push(Router::with_path("pic/<id>").get(netease.clone().get_pic()))
-        .push(Router::with_path("url/<id>").get(netease.clone().get_url()));
+    let netease = Semaphore::const_new(8).then(Arc::new).then(Netease::new).then(Arc::new).into_router();
     let acceptor = TcpListener::new("127.0.0.1:5811").bind().await;
-    Server::new(acceptor).serve(netease_route).await;
+    Server::new(acceptor).serve(Router::new().get(help).push(netease)).await;
 }
