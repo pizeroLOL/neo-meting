@@ -5,8 +5,13 @@ use std::{
 
 use neo_metting::{netease::Netease, MetingApi, MetingSearchOptions};
 use salvo::{
-    async_trait, conn::TcpListener, handler, http::StatusError, writing::{Json, Redirect}, Depot, FlowCtrl, Handler, Listener, Request, Response, Router, Server
+    async_trait,
+    http::StatusError,
+    prelude::*,
+    writing::{Json, Redirect},
+    Depot, FlowCtrl, Handler, Request, Response, Router,
 };
+use shuttle_salvo::SalvoService;
 use tokio::sync::{RwLock, Semaphore};
 use tracing::warn;
 
@@ -378,10 +383,14 @@ fn help() -> &'static str {
     include_str!("../help.txt")
 }
 
-#[tokio::main]
-async fn main() {
-    tracing_subscriber::fmt().init();
-    let netease = Semaphore::const_new(8).then(Arc::new).then(Netease::new).then(Arc::new).into_router();
-    let acceptor = TcpListener::new("127.0.0.1:5811").bind().await;
-    Server::new(acceptor).serve(Router::new().get(help).push(netease)).await;
+#[shuttle_runtime::main]
+async fn main() -> shuttle_salvo::ShuttleSalvo {
+    // tracing_subscriber::fmt().init();
+    let netease = Semaphore::const_new(8)
+        .then(Arc::new)
+        .then(Netease::new)
+        .then(Arc::new)
+        .into_router();
+    let ir = Router::new().get(help).push(netease);
+    Ok(SalvoService(ir))
 }
