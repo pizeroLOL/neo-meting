@@ -15,3 +15,4 @@ serde_json = "1.0.141"
 tokio = { version = "1.46.1", features = ["macros", "sync"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
+shuttle-runtime = "0.56.0"
