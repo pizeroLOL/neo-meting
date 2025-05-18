@@ -350,6 +350,17 @@ impl MetingApi for Netease {
             })?
             .first()
             .ok_or(Error::None)?;
+        json
+            .get("code")
+            .ok_or(Error::NoField("code"))?
+            .as_u64()
+            .ok_or(Error::TypeMismatch {
+                feild: "code",
+                target: "u64",
+            }).and_then(|x| match x {
+                200 => Ok(()),
+                _ => Err(Error::None)
+            })?;
         json.get("url")
             .or_else(|| json.get("uf")?.get("url"))
             .ok_or(Error::NoField("json.url / json.uf.url"))?
