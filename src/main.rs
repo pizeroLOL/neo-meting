@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
-use neo_metting::{netease::Netease, MetingApi, MetingSearchOptions};
+use neo_meting::{netease::Netease, MetingApi, MetingSearchOptions};
 use salvo::{
     async_trait, conn::TcpListener, handler, http::StatusError, writing::{Json, Redirect}, Depot, FlowCtrl, Handler, Listener, Request, Response, Router, Server
 };
@@ -28,8 +28,8 @@ pub trait Then {
 }
 impl<T> Then for T {}
 
-fn prosess_meting_error(file: &str, line: u32, e: neo_metting::Error) -> StatusError {
-    use neo_metting::Error as E;
+fn prosess_meting_error(file: &str, line: u32, e: neo_meting::Error) -> StatusError {
+    use neo_meting::Error as E;
     warn!("{file}:{line}: {e:?}");
     match e {
         E::Remote(_) => StatusError::bad_gateway(),
