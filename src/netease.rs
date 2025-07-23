@@ -11,7 +11,7 @@ use openssl::{
     rsa::{Padding, Rsa},
     symm::{encrypt, Cipher},
 };
-use rand::{rngs::OsRng, RngCore};
+use rand::{rand_core::OsError, rngs::OsRng, TryRngCore};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
@@ -29,6 +29,7 @@ pub enum ParseErr {
     EncodeRevStr(FromUtf8Error),
     EncodeData(ErrorStack),
     EncodeKey(ErrorStack),
+    GenRandomNumber(OsError),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -43,7 +44,10 @@ impl WeapiEncoder {
         let iv = b"0102030405060708";
         // let mut body = Vec::new();
         let cbc = Cipher::aes_128_cbc();
-        let skey = [0u8; 16].change_self(|buf| OsRng.fill_bytes(buf));
+        let mut skey = [0u8; 16];
+        OsRng
+            .try_fill_bytes(&mut skey)
+            .map_err(ParseErr::GenRandomNumber)?;
         let base62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .as_bytes()
             .to_vec();
@@ -350,16 +354,16 @@ impl MetingApi for Netease {
             })?
             .first()
             .ok_or(Error::None)?;
-        json
-            .get("code")
+        json.get("code")
             .ok_or(Error::NoField("code"))?
             .as_u64()
             .ok_or(Error::TypeMismatch {
                 feild: "code",
                 target: "u64",
-            }).and_then(|x| match x {
+            })
+            .and_then(|x| match x {
                 200 => Ok(()),
-                _ => Err(Error::None)
+                _ => Err(Error::None),
             })?;
         json.get("url")
             .or_else(|| json.get("uf")?.get("url"))

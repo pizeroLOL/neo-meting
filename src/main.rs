@@ -5,7 +5,12 @@ use std::{
 
 use neo_meting::{netease::Netease, MetingApi, MetingSearchOptions};
 use salvo::{
-    async_trait, conn::TcpListener, handler, http::StatusError, writing::{Json, Redirect}, Depot, FlowCtrl, Handler, Listener, Request, Response, Router, Server
+    async_trait,
+    conn::TcpListener,
+    handler,
+    http::StatusError,
+    writing::{Json, Redirect},
+    Depot, FlowCtrl, Handler, Listener, Request, Response, Router, Server,
 };
 use tokio::sync::{RwLock, Semaphore};
 use tracing::warn;
@@ -381,7 +386,13 @@ fn help() -> &'static str {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().init();
-    let netease = Semaphore::const_new(8).then(Arc::new).then(Netease::new).then(Arc::new).into_router();
-    let acceptor = TcpListener::new("127.0.0.1:5811").bind().await;
-    Server::new(acceptor).serve(Router::new().get(help).push(netease)).await;
+    let netease = Semaphore::const_new(8)
+        .then(Arc::new)
+        .then(Netease::new)
+        .then(Arc::new)
+        .into_router();
+    let acceptor = TcpListener::new("0.0.0.0:5811").bind().await;
+    Server::new(acceptor)
+        .serve(Router::new().get(help).push(netease))
+        .await;
 }

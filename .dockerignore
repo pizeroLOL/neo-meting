@@ -1,0 +1,6 @@
+/target
+/.shuttle
+/.github/workflows
+/Readme.md
+/Dockerfile
+/.dockerignore
