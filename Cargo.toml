@@ -3,6 +3,9 @@ name = "neo-meting"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+random-ip = []
+
 [dependencies]
 base64 = "0.22.1"
 hex = "0.4.3"

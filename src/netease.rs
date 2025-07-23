@@ -20,6 +20,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::sync::{AcquireError, Semaphore};
 
+#[cfg(feature = "random-ip")]
+use rand::Rng;
+
 use crate::{Error, MetingApi, MetingSearchOptions, MetingSong, Then};
 
 #[derive(Debug)]
@@ -242,13 +245,63 @@ pub struct Netease {
     counter: Arc<Semaphore>,
 }
 
+#[cfg(feature = "random-ip")]
+pub struct IpStr(String);
+
+#[cfg(feature = "random-ip")]
+impl IpStr {
+    pub fn random_chinese_ip() -> Self {
+        IpStr::from(rand::rng().random_range(1884815360..1884890111))
+    }
+}
+
+#[cfg(feature = "random-ip")]
+impl AsRef<str> for IpStr {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+#[cfg(feature = "random-ip")]
+impl From<IpStr> for String {
+    fn from(ip: IpStr) -> Self {
+        ip.0
+    }
+}
+
+#[cfg(feature = "random-ip")]
+impl From<u32> for IpStr {
+    fn from(ip: u32) -> Self {
+        let octets = [
+            (ip >> 24) as u8,
+            (ip >> 16) as u8,
+            (ip >> 8) as u8,
+            ip as u8,
+        ];
+        Self(format!(
+            "{}.{}.{}.{}",
+            octets[0], octets[1], octets[2], octets[3]
+        ))
+    }
+}
+
+#[cfg(all(test, feature = "random-ip"))]
+mod test_ip_str {
+    use crate::netease::IpStr;
+
+    #[test]
+    fn test_from_u32() {
+        let ip = IpStr::from(1884815360);
+        assert_eq!(ip.0, "112.88.0.0");
+    }
+}
+
 impl Netease {
     pub fn new(counter: Arc<Semaphore>) -> Netease {
         let headers = HeaderMap::new().change_self(|hm|{
             hm.append("Referer" ,HeaderValue::from_static( "https://music.163.com/"));
             hm.append("Cookie" ,HeaderValue::from_static("appver=8.2.30; os=iPhone OS; osver=15.0; EVNSM=1.0.0; buildver=2206; channel=distribution; machineid=iPhone13.3"));
             hm.append("User-Agent" ,HeaderValue::from_static("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 CloudMusic/0.1.1 NeteaseMusic/8.2.30"));
-            // .header("X-Real-IP" , long2ip(mt_rand(1884815360, 1884890111)))
             hm.append("Accept" , HeaderValue::from_static("*/*"));
             hm.append("Accept-Language" , HeaderValue::from_static("zh-CN,zh;q=0.8,gl;q=0.6,zh-TW;q=0.4"));
             hm.append("Connection" , HeaderValue::from_static("keep-alive"));
@@ -272,6 +325,12 @@ impl Netease {
         self.client
             .post(url)
             .form(&data)
+            .then(|req| {
+                #[cfg(feature = "random-ip")]
+                return req.header("X-Real-IP", IpStr::random_chinese_ip().as_ref());
+                #[cfg(not(feature = "random-ip"))]
+                return req;
+            })
             .send()
             .await
             .map_err(ReqError::Req)?
