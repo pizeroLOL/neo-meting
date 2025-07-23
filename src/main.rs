@@ -364,15 +364,15 @@ where
         }
         Hendle(self.clone())
     }
-    fn into_router(self: Arc<Self>) -> Router where {
+    fn into_router(self: Arc<Self>) -> Router {
         Router::with_path(Self::name())
-            .push(Router::with_path("pic/<id>").get(self.clone().get_pic()))
-            .push(Router::with_path("lrc/<id>").get(self.clone().get_lrc()))
-            .push(Router::with_path("url/<id>").get(self.clone().get_url()))
-            .push(Router::with_path("song/<id>").get(self.clone().get_song()))
-            .push(Router::with_path("playlist/<id>").get(self.clone().get_playlist()))
-            .push(Router::with_path("artist/<id>").get(self.clone().get_artist()))
-            .push(Router::with_path("search/<id>").get(self.clone().get_search()))
+            .push(Router::with_path("pic/{id}").get(self.clone().get_pic()))
+            .push(Router::with_path("lrc/{id}").get(self.clone().get_lrc()))
+            .push(Router::with_path("url/{id}").get(self.clone().get_url()))
+            .push(Router::with_path("song/{id}").get(self.clone().get_song()))
+            .push(Router::with_path("playlist/{id}").get(self.clone().get_playlist()))
+            .push(Router::with_path("artist/{id}").get(self.clone().get_artist()))
+            .push(Router::with_path("search/{id}").get(self.clone().get_search()))
     }
 }
 
@@ -391,7 +391,7 @@ async fn main() {
         .then(Netease::new)
         .then(Arc::new)
         .into_router();
-    let acceptor = TcpListener::new("0.0.0.0:5811").bind().await;
+    let acceptor = TcpListener::new("127.0.0.1:5811").bind().await;
     Server::new(acceptor)
         .serve(Router::new().get(help).push(netease))
         .await;
