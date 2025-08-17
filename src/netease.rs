@@ -534,11 +534,14 @@ impl MetingApi for Netease {
             .map_err(|e| Error::Remote(format!("{e:?}")))?;
         let (id, name, artist) = json
             .get("songs")
-            .unwrap()
+            .ok_or(Error::NoField("songs".into()))?
             .as_array()
-            .unwrap()
+            .ok_or(Error::TypeMismatch {
+                feild: "songs".into(),
+                target: "array".into(),
+            })?
             .first()
-            .unwrap()
+            .ok_or(Error::NoField("songs.[0]"))?
             .then(get_id_name_artist)
             .ok_or(Error::NoField(GET_ID_NAME_PIC_ARTIST_ERR_MSG))?;
         MetingSong {
