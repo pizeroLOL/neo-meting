@@ -1,12 +1,9 @@
-[package]
-name = "neo-meting"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+default-members = ["crates/neo-meting"]
 
-[features]
-random-ip = []
-
-[dependencies]
+[workspace.dependencies]
 base64 = "0.22.1"
 hex = "0.4.3"
 openssl = "0.10.75"
