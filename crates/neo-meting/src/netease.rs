@@ -11,7 +11,10 @@ use openssl::{
     rsa::{Padding, Rsa},
     symm::{encrypt, Cipher},
 };
-use rand::{rand_core::OsError, rngs::OsRng, TryRngCore};
+use rand::{
+    rngs::{SysError, SysRng},
+    TryRng,
+};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
@@ -32,7 +35,7 @@ pub enum ParseErr {
     EncodeRevStr(FromUtf8Error),
     EncodeData(ErrorStack),
     EncodeKey(ErrorStack),
-    GenRandomNumber(OsError),
+    GenRandomNumber(SysError),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -47,42 +50,31 @@ impl WeapiEncoder {
         let iv = b"0102030405060708";
         // let mut body = Vec::new();
         let cbc = Cipher::aes_128_cbc();
-        let mut skey = [0u8; 16];
-        OsRng
-            .try_fill_bytes(&mut skey)
+        let mut full_skey = [0u8; 128];
+        let skey = &mut full_skey[..16];
+        SysRng
+            .try_fill_bytes(skey)
             .map_err(ParseErr::GenRandomNumber)?;
-        let base62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-            .as_bytes()
-            .to_vec();
-        let skey = skey
-            .into_iter()
-            .map(|index| base62[(index % 62) as usize])
-            .collect::<Vec<_>>();
+        let base62 = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        skey.iter_mut()
+            .for_each(|index| *index = base62[(*index % 62u8) as usize]);
 
         let params = input
             .as_bytes()
             .then(|source| encrypt(cbc, b"0CoJUm6Qyw8W8jud", Some(iv), source))
             .map_err(ParseErr::EncodeSource)?
             .then(|data| BASE64_STANDARD.encode(data))
-            .bytes()
-            .collect::<Vec<_>>()
-            .then(|data| encrypt(cbc, &skey, Some(iv), &data))
+            .as_bytes()
+            .then(|data| encrypt(cbc, skey, Some(iv), data))
             .map_err(ParseErr::EncodeData)?
             .then(|output| BASE64_STANDARD.encode(output));
-
-        let skey = skey
-            .change_self(|skey| skey.reverse())
-            .then(String::from_utf8)
-            .map_err(ParseErr::EncodeRevStr)?;
+        full_skey.reverse();
         let rsa = Rsa::public_key_from_pem(include_bytes!("cert/netease.pub"))
             .map_err(ParseErr::ImportPubKey)?;
         let mut enc_sec_key = vec![0; rsa.size() as usize];
-        [vec![0u8; 128 - skey.len()], skey.as_bytes().to_vec()]
-            .concat()
-            .then(|y| {
-                rsa.public_encrypt(&y, &mut enc_sec_key, Padding::NONE)
-                    .map_err(ParseErr::EncodeKey)
-            })?;
+        full_skey
+            .then(|i| rsa.public_encrypt(&i, &mut enc_sec_key, Padding::NONE))
+            .map_err(ParseErr::EncodeKey)?;
         let enc_sec_key = hex::encode(enc_sec_key);
         Ok(Self {
             params,
@@ -534,11 +526,11 @@ impl MetingApi for Netease {
             .map_err(|e| Error::Remote(format!("{e:?}")))?;
         let (id, name, artist) = json
             .get("songs")
-            .ok_or(Error::NoField("songs".into()))?
+            .ok_or(Error::NoField("songs"))?
             .as_array()
             .ok_or(Error::TypeMismatch {
-                feild: "songs".into(),
-                target: "array".into(),
+                feild: "songs",
+                target: "array",
             })?
             .first()
             .ok_or(Error::NoField("songs.[0]"))?
