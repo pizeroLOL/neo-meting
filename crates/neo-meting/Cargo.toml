@@ -10,7 +10,7 @@ random-ip = []
 base64.workspace = true
 hex.workspace = true
 openssl.workspace = true
-rand.workspace = true
+rand = { workspace = true, features = ["thread_rng"] }
 reqwest.workspace = true
 salvo.workspace = true
 serde.workspace = true

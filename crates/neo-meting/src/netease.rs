@@ -11,10 +11,7 @@ use openssl::{
     rsa::{Padding, Rsa},
     symm::{encrypt, Cipher},
 };
-use rand::{
-    rngs::{SysError, SysRng},
-    TryRng,
-};
+use rand::fill;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, ClientBuilder,
@@ -35,7 +32,6 @@ pub enum ParseErr {
     EncodeRevStr(FromUtf8Error),
     EncodeData(ErrorStack),
     EncodeKey(ErrorStack),
-    GenRandomNumber(SysError),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -52,9 +48,7 @@ impl WeapiEncoder {
         let cbc = Cipher::aes_128_cbc();
         let mut full_skey = [0u8; 128];
         let skey = &mut full_skey[..16];
-        SysRng
-            .try_fill_bytes(skey)
-            .map_err(ParseErr::GenRandomNumber)?;
+        fill(skey);
         let base62 = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         skey.iter_mut()
             .for_each(|index| *index = base62[(*index % 62u8) as usize]);
