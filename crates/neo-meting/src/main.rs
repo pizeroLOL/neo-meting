@@ -345,7 +345,7 @@ where
                 let options = MetingSearchOptions {
                     limit: 30,
                     page: 1,
-                    r#type: 0,
+                    r#type: 1,
                 };
                 let url = self
                     .search(
